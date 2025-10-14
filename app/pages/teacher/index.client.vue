@@ -9,7 +9,7 @@ definePageMeta({
 })
 
 const appConfig = useAppConfig()
-const { user } = useUserSession()
+const { user } = useUser()
 const route = useRoute()
 const newMaterial = reactive<Partial<LearningMaterial>>({
   id: '',
@@ -52,7 +52,7 @@ function handleAddMaterial() {
       translation: newMaterial.translation || '',
       difficulty: newMaterial.difficulty || 'beginner',
       createdAt: new Date().toISOString().split('T')[0],
-      createdBy: user.value?.id || ''
+      createdBy: user.value?.user.id || ''
     },
     ...learningMaterials.value
   ]

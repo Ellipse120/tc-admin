@@ -2,7 +2,8 @@
 import type { ResponseUser } from '~/shared/types'
 
 const appConfig = useAppConfig()
-const { user, logout } = useUser()
+const { user, logout, checkIsLoggedIn } = useUser()
+const loggedIn = ref(checkIsLoggedIn())
 
 const onLogout = async () => {
   logout()
@@ -22,7 +23,7 @@ const onLogout = async () => {
       </template>
 
       <template #right>
-        <AuthState v-slot="{ loggedIn }">
+        <div class="flex gap-2">
           <div class="flex items-center space-x-4">
             <span class="text-gray-700 dark:text-white">欢迎回来，{{ (user as ResponseUser)?.user.userName }}</span>
           </div>
@@ -55,7 +56,7 @@ const onLogout = async () => {
             class="hidden lg:inline-flex"
             to="/signup"
           />
-        </AuthState>
+        </div>
       </template>
     </UHeader>
 

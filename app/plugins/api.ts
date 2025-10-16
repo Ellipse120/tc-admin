@@ -3,6 +3,7 @@ export default defineNuxtPlugin((nuxtApp) => {
   const userAuth = user.value?.token
 
   const config = useRuntimeConfig()
+  const toast = useToast()
 
   const api: typeof $fetch = $fetch.create({
     baseURL: config.public.apiUrl as string ?? 'http://localhost:3000/api',
@@ -12,7 +13,10 @@ export default defineNuxtPlugin((nuxtApp) => {
       }
     },
     async onResponseError({ response }) {
-      // showNotify(`${response.status}: ${response._data?.message}`, {})
+      if (!response._data?.success) {
+        toast.add({ title: `${response._data?.message}` || '未知错误!', color: 'error' })
+      }
+
       if (response.status === 401) {
         await nuxtApp.runWithContext(() => navigateTo('/login'))
       }

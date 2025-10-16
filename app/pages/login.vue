@@ -4,12 +4,12 @@ import type { FormSubmitEvent } from '@nuxt/ui'
 import type { ResponseUser } from '~/shared/types'
 
 definePageMeta({
-  layout: 'auth'
+  layout: 'standalone'
 })
 
 useSeoMeta({
-  title: 'Login',
-  description: 'Login to your account to continue'
+  title: '登录',
+  description: '登录后继续'
 })
 
 const toast = useToast()
@@ -86,7 +86,7 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
     })
 
     // TODO role 应该是多个
-    const redirect = data.user.role !== appConfig.appInfo.roleEnum.Student ? '/teacher' : '/student'
+    const redirect = data.user.role !== appConfig.appInfo.roleEnum.student ? '/teacher' : '/student'
 
     return navigateTo(redirect)
   }

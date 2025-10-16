@@ -8,54 +8,38 @@ const toast = useToast()
 const appConfig = useAppConfig()
 
 const UButton = resolveComponent('UButton')
+const UPopover = resolveComponent('UPopover')
+const UFieldGroup = resolveComponent('UFieldGroup')
 
-const { data } = await useAPI('/Account/listAllUser')
-const users = data.value?.list
-
-const roleItems = appConfig.appInfo.roleItems
+const { data, refresh, pending } = await useAPI('/Account/listAllUser')
+const users = computed(() => data.value?.list)
+const deleteModalOpen = ref(false)
+const roleItems = appConfig.appInfo.roleEnums
 const columns = [
   {
     accessorKey: 'id',
-    header: 'ID',
-    cell: ({ row }) => `${row.getValue('id')}`
+    header: 'ID'
   },
   {
     accessorKey: 'userName',
-    header: '用户名',
-    cell: ({ row }) => `${row.getValue('userName')}`
+    header: '用户名'
   },
   {
     accessorKey: 'name',
-    header: '姓名',
-    cell: ({ row }) => `${row.getValue('name')}`
+    header: '姓名'
   },
   {
     accessorKey: 'email',
-    header: '电子邮箱',
-    cell: ({ row }) => `${row.getValue('email')}`
+    header: '电子邮箱'
   },
   {
     accessorKey: 'role',
     header: '角色',
-    cell: ({ row }) => `${formatText(Object.entries(appConfig.appInfo.roleEnum).map(([label, value]) => ({ label: label, value: value })), row.getValue('role'))}`
+    cell: ({ row }) => `${formatText(appConfig.appInfo.roleEnums, row.getValue('role'))}`
   },
   {
-    accessorKey: '',
-    header: '操作',
-    cell: ({ row }) => {
-      const editBtn = h(UButton, {
-        color: 'success',
-        onClick: () => openModal(row.original)
-      }, () => '编辑')
-      const deleteBtn = h(UButton, {
-        color: 'warning',
-        onClick: () => openModal(row.original)
-      }, () => '删除')
-
-      return h('div', {
-        class: 'flex gap-2'
-      }, [editBtn, deleteBtn])
-    }
+    accessorKey: 'actions',
+    header: '操作'
   }
 ]
 
@@ -63,15 +47,41 @@ const isModalOpen = ref(false)
 const defaultUser = {
   id: null,
   name: null,
-  role: 'student',
+  role: appConfig.appInfo.roleEnum.teacher,
   email: null,
   userName: null
 }
 const currentUser = ref({ ...defaultUser })
 
-function openModal(user = { ...defaultUser }) {
-  currentUser.value = { ...user }
+async function openModal(user = { ...defaultUser }) {
+  currentUser.value = { ...defaultUser }
+  if (user.id) {
+    const u = await $api(`/Account/getUserById/${user.id}`)
+
+    currentUser.value = u
+  }
+
   isModalOpen.value = true
+}
+
+function handleDelete(user) {
+  currentUser.value = { ...user }
+
+  deleteModalOpen.value = true
+}
+
+const closeDeleteModal = () => {
+  deleteModalOpen.value = false
+}
+
+const confirmDelete = async (user) => {
+  const response = await $api(`/Account/DeleteUser/${user.id}`, {
+    method: 'delete'
+  })
+
+  deleteModalOpen.value = false
+  toast.add({ title: response || '删除成功', color: 'success' })
+  await refresh()
 }
 
 function batchImport() {
@@ -81,22 +91,26 @@ function batchImport() {
 function goBack() {
   navigateTo('/teacher?tab=student')
 }
+
 const { $api } = useNuxtApp()
+
 async function saveUser(user) {
+  let response = null
+
   if (user.id) {
-    const index = users.value.findIndex(u => u.id === user.id)
-    users.value[index] = user
-    toast.add({ title: 'User updated!', color: 'success' })
+    response = await $api('/Account/UpdateUser', {
+      method: 'put',
+      body: user
+    })
   } else {
-    // user.id = users.value.length + 1
-    // users.value.push(user)
-    // toast.add({ title: 'User added!', color: 'success' })
-    const response = await $api('/Account/create-user', {
+    response = await $api('/Account/CreateUser', {
       method: 'post',
       body: user
     })
-    toast.add({ title: response || 'User added!', color: 'success' })
   }
+
+  toast.add({ title: response || '成功', color: 'success' })
+  await refresh()
   closeModal()
 }
 
@@ -110,11 +124,17 @@ function closeModal() {
   <div>
     <div class="flex gap-4">
       <UButton
+        label="查询"
+        color="secondary"
+        @click="refresh()"
+      />
+      <UButton
         label="添加"
         @click="openModal()"
       />
       <UButton
         label="导入"
+        color="warning"
         @click="batchImport()"
       />
       <UButton
@@ -127,12 +147,28 @@ function closeModal() {
     <UTable
       :data="users"
       :columns="columns"
+      :loading="pending"
     >
       <template #actions-cell="{ row }">
-        <UButton
-          label="Edit"
-          @click="openModal(row.original)"
-        />
+        <div class="space-x-2">
+          <UButton
+            icon="i-lucide-edit"
+            variant="outline"
+            color="info"
+            size="sm"
+            title="编辑"
+            @click="openModal(row.original)"
+          />
+
+          <UButton
+            icon="i-lucide-trash"
+            variant="outline"
+            color="error"
+            size="sm"
+            title="删除"
+            @click="handleDelete(row.original)"
+          />
+        </div>
       </template>
     </UTable>
 
@@ -188,15 +224,41 @@ function closeModal() {
       </template>
       <template #footer>
         <UButton
-          label="Cancel"
+          label="取消"
           variant="subtle"
           @click="closeModal"
         />
         <UButton
-          label="Save"
+          label="保存"
           color="success"
           type="submit"
           @click="saveUser(currentUser)"
+        />
+      </template>
+    </UModal>
+
+    <UModal v-model:open="deleteModalOpen">
+      <template #header>
+        <h2>提醒</h2>
+      </template>
+
+      <template #body>
+        <div class="text-center text-xl">
+          确定删除用户： {{ currentUser.name }} 吗？
+        </div>
+      </template>
+
+      <template #footer>
+        <UButton
+          label="取消"
+          variant="subtle"
+          @click="closeDeleteModal"
+        />
+        <UButton
+          label="确定"
+          color="success"
+          type="submit"
+          @click="confirmDelete(currentUser)"
         />
       </template>
     </UModal>

@@ -389,6 +389,7 @@ const calcPercentage = (value) => {
                       size="sm"
                       @click="handleEdit(item)"
                     />
+
                     <template #body>
                       <UForm
                         :schema="schema"

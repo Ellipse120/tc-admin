@@ -3,11 +3,29 @@ export default defineAppConfig({
     adminTitle: '英语AI学习系统管理后台',
     title: '英语AI学习系统',
     roleEnum: {
-      Teacher: 0,
-      Assistant: 1,
-      Student: 2,
-      Admin: 3
+      teacher: 4,
+      assistant: 2,
+      student: 8,
+      admin: 1
     },
+    roleEnums: [
+      {
+        label: '教师',
+        value: 4
+      },
+      {
+        label: '助教',
+        value: 2
+      },
+      {
+        label: '管理员',
+        value: 1
+      },
+      {
+        label: '学生',
+        value: 8
+      }
+    ],
     roleItems: [
       {
         label: '教师',

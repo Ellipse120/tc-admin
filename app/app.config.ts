@@ -1,29 +1,55 @@
+const roleEnum = {
+  teacher: 4,
+  assistant: 2,
+  student: 8,
+  admin: 1
+}
+
+const meterialTypeEnum = {
+  word: 0,
+  phrase: 1,
+  sentense: 2
+}
+
+const wordTypeEnum = {
+  verb: 0,
+  noun: 1,
+  adjective: 2,
+  adverb: 3,
+  pronoun: 4,
+  preposition: 5,
+  conjunction: 6,
+  article: 7,
+  interjection: 8
+}
+
+const difficultyLevelEnum = {
+  easy: 0,
+  medium: 1,
+  hard: 2
+}
+
 export default defineAppConfig({
   appInfo: {
     adminTitle: '英语AI学习系统管理后台',
     title: '英语AI学习系统',
-    roleEnum: {
-      teacher: 4,
-      assistant: 2,
-      student: 8,
-      admin: 1
-    },
+    roleEnum,
     roleEnums: [
       {
         label: '教师',
-        value: 4
+        value: roleEnum.teacher
       },
       {
         label: '助教',
-        value: 2
+        value: roleEnum.assistant
       },
       {
         label: '管理员',
-        value: 1
+        value: roleEnum.admin
       },
       {
         label: '学生',
-        value: 8
+        value: roleEnum.student
       }
     ],
     roleItems: [
@@ -43,6 +69,30 @@ export default defineAppConfig({
         label: '学生',
         value: 'student'
       }
+    ],
+    meterialTypeEnum,
+    materialTypes: [
+      { label: '单词', value: meterialTypeEnum.word, engLabel: 'word' },
+      { label: '短语', value: meterialTypeEnum.phrase, engLabel: 'phrase' },
+      { label: '句子', value: meterialTypeEnum.sentense, engLabel: 'sentence' }
+    ],
+    wordTypeEnum,
+    wordTypes: [
+      { label: '动词', value: wordTypeEnum.verb, engLabel: 'verb' },
+      { label: '名词', value: wordTypeEnum.noun, engLabel: 'noun' },
+      { label: '形容词', value: wordTypeEnum.adjective, engLabel: 'adjective' },
+      { label: '副词', value: wordTypeEnum.adverb, engLabel: 'adverb' },
+      { label: '代词', value: wordTypeEnum.pronoun, engLabel: 'pronoun' },
+      { label: '介词', value: wordTypeEnum.preposition, engLabel: 'preposition' },
+      { label: '连词', value: wordTypeEnum.conjunction, engLabel: 'conjunction' },
+      { label: '冠词', value: wordTypeEnum.article, engLabel: 'article' },
+      { label: '感叹词', value: wordTypeEnum.interjection, engLabel: 'interjection' }
+    ],
+    difficultyLevelEnum,
+    difficultyLevels: [
+      { label: '初级', value: difficultyLevelEnum.easy, engLabel: 'beginner' },
+      { label: '中级', value: difficultyLevelEnum.medium, engLabel: 'intermediate' },
+      { label: '高级', value: difficultyLevelEnum.hard, engLabel: 'advanced' }
     ]
   },
   mockData: {

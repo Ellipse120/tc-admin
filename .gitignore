@@ -27,3 +27,4 @@ logs
 .history
 
 .wrangler/
+.vscode/settings.json

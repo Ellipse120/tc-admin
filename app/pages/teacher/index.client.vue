@@ -9,89 +9,118 @@ definePageMeta({
 })
 
 const appConfig = useAppConfig()
-const { user } = useUser()
 const route = useRoute()
+const toast = useToast()
+const { $api } = useNuxtApp()
+
+const { data: learningMaterials, refresh, pending } = await useAPI<LearningMaterial[]>('/LearningMaterials/ListVocabularyMaterials')
+const [modalState, toggleModalState] = useToggle() // 控制编辑弹窗
+const [deleteModalState, toggleDeleteModalState] = useToggle() // 控制编辑弹窗
+
 const newMaterial = reactive<Partial<LearningMaterial>>({
   id: '',
-  type: 'word',
+  type: appConfig.appInfo.meterialTypeEnum.word,
   content: '',
   translation: '',
-  difficulty: 'beginner'
+  phoneticSymbol: '',
+  wordType: undefined,
+  difficulty: appConfig.appInfo.difficultyLevelEnum.easy
 })
 
-const getDifficultyColor = (difficulty: string) => {
+const getDifficultyColor = (difficulty: number) => {
   switch (difficulty) {
-    case 'beginner': return 'bg-green-100 text-green-800'
-    case 'intermediate': return 'bg-yellow-100 text-yellow-800'
-    case 'advanced': return 'bg-red-100 text-red-800'
+    case appConfig.appInfo.difficultyLevelEnum.easy: return 'bg-green-100 text-green-800'
+    case appConfig.appInfo.difficultyLevelEnum.medium: return 'bg-yellow-100 text-yellow-800'
+    case appConfig.appInfo.difficultyLevelEnum.hard: return 'bg-red-100 text-red-800'
     default: return 'bg-gray-100 text-gray-800'
   }
 }
 
-const getTypeIcon = (type: string) => {
+const getTypeIcon = (type: number) => {
   switch (type) {
-    case 'word': return '📝'
-    case 'sentence': return '💬'
-    case 'phrase': return '🔤'
+    case appConfig.appInfo.meterialTypeEnum.word: return '📝'
+    case appConfig.appInfo.meterialTypeEnum.sentense: return '💬'
+    case appConfig.appInfo.meterialTypeEnum.phrase: return '🔤'
     default: return '📖'
   }
 }
-const toast = useToast()
 
-function handleAddMaterial() {
+async function handleAddMaterial() {
+  await $api('/LearningMaterials/CreateVocabularyMateria', {
+    method: 'post',
+    body: newMaterial
+  })
+
   toast.add({
-    title: 'Success',
-    description: '添加成功',
+    title: '添加成功',
     color: 'success'
   })
-  learningMaterials.value = [
-    {
-      id: Date.now().toString(),
-      type: newMaterial.type || 'word',
-      content: newMaterial.content || '',
-      translation: newMaterial.translation || '',
-      difficulty: newMaterial.difficulty || 'beginner',
-      createdAt: new Date().toISOString().split('T')[0],
-      createdBy: user.value?.user.id || ''
-    },
-    ...learningMaterials.value
-  ]
+
+  await refresh()
 }
-const editingMaterial = ref<LearningMaterial>({
+
+const editingMaterial = ref<Partial<LearningMaterial>>({
   id: '',
-  type: 'word',
+  type: undefined,
   content: '',
   translation: '',
-  difficulty: 'beginner',
+  phoneticSymbol: '',
+  wordType: undefined,
+  difficulty: undefined,
   createdAt: '',
   createdBy: ''
 })
-const handleEdit = (item: LearningMaterial) => {
-  editingMaterial.value = { ...item }
-}
-const [modalState, toggleModalState] = useToggle() // 控制编辑弹窗
-const saveEditingMaterial = () => {
-  const index = learningMaterials.value.findIndex(m => m.id === editingMaterial.value.id)
-  if (index !== -1) {
-    learningMaterials.value[index] = { ...editingMaterial.value }
-    toast.add({
-      title: 'Success',
-      description: '修改成功',
-      color: 'success'
-    })
-    toggleModalState()
+const handleEdit = async (item: LearningMaterial) => {
+  if (item.id) {
+    const u = await $api<LearningMaterial>(`/LearningMaterials/getVocabularyMaterialById/${item.id}`)
+
+    editingMaterial.value = u
+
+    toggleModalState(true)
   }
 }
 
+const saveEditingMaterial = async () => {
+  await $api('/LearningMaterials/UpdateVocabularyMaterial', {
+    method: 'put',
+    body: editingMaterial.value
+  })
+
+  toast.add({
+    title: '修改成功',
+    color: 'success'
+  })
+  toggleModalState(false)
+  await refresh()
+}
+
 const handleDelete = (item: LearningMaterial) => {
-  learningMaterials.value = learningMaterials.value.filter(m => m.id !== item.id)
+  editingMaterial.value = { ...item }
+  toggleDeleteModalState(true)
+}
+
+const closeDeleteModal = () => {
+  toggleDeleteModalState(false)
+}
+
+const confirmDelete = async (item: LearningMaterial) => {
+  const response: string = await $api(`/LearningMaterials/DeleteVocabularyMaterial/${item.id}`, {
+    method: 'delete'
+  })
+
+  await refresh()
+  toast.add({
+    title: response || '删除成功',
+    color: 'success'
+  })
+  toggleDeleteModalState(false)
 }
 
 // 统计数据
 const students = ref(appConfig.mockData.mockUsers.filter(u => u.role === 'student'))
-const learningMaterials = ref(appConfig.mockData.mockLearningMaterials)
+// const learningMaterials = ref(appConfig.mockData.mockLearningMaterials)
 const studentProgressList = ref(appConfig.mockData.mockStudentProgress)
-const totalMaterials = learningMaterials.value.length
+const totalMaterials = learningMaterials.value?.length || 0
 const totalStudents = students.value.length
 
 const activeStudents = studentProgressList.value.filter((p) => {
@@ -134,16 +163,9 @@ watchEffect(() => {
   routeTab.value = activeTab.value as string
 })
 
-const materialTypes = [
-  { label: '单词', value: 'word' },
-  { label: '短语', value: 'phrase' },
-  { label: '句子', value: 'sentence' }
-]
-const difficultyLevels = [
-  { label: '初级', value: 'beginner' },
-  { label: '中级', value: 'intermediate' },
-  { label: '高级', value: 'advanced' }
-]
+const materialTypes = appConfig.appInfo.materialTypes
+const difficultyLevels = appConfig.appInfo.difficultyLevels
+const wordTypes = appConfig.appInfo.wordTypes
 
 const studentLevel = (student) => {
   return studentProgressList.value.find(p => p.studentId === student.id)?.level || 'beginner'
@@ -303,6 +325,30 @@ const calcPercentage = (value) => {
                   placeholder="选择资料类型"
                 />
               </UFormField>
+
+              <UFormField
+                v-if="newMaterial.type === appConfig.appInfo.meterialTypeEnum.word"
+                label="音标"
+                name="phoneticSymbol"
+              >
+                <UInput
+                  v-model="newMaterial.phoneticSymbol"
+                  placeholder="输入单词音标"
+                />
+              </UFormField>
+
+              <UFormField
+                v-if="newMaterial.type === appConfig.appInfo.meterialTypeEnum.word"
+                label="词性"
+                name="wordType"
+              >
+                <USelect
+                  v-model="newMaterial.wordType"
+                  :items="wordTypes"
+                  placeholder="选择词性"
+                />
+              </UFormField>
+
               <UFormField
                 label="内容"
                 name="content"
@@ -345,9 +391,18 @@ const calcPercentage = (value) => {
 
           <UCard>
             <template #header>
-              <h3 class="text-base font-semibold leading-6">
-                学习资料列表
-              </h3>
+              <div class="flex items-center gap-2">
+                <h3 class="text-base font-semibold leading-6">
+                  学习资料列表
+                </h3>
+                <UIcon
+                  name="i-lucide-refresh-ccw"
+                  class="size-5 cursor-pointer"
+                  :class="{ 'animate-spin': pending }"
+                  title="点击刷新学习资料列表"
+                  @click="refresh()"
+                />
+              </div>
             </template>
 
             <div class="space-y-4">
@@ -369,10 +424,17 @@ const calcPercentage = (value) => {
                     </p>
                     <div class="flex items-center space-x-2 mt-1">
                       <UBadge :class="getDifficultyColor(item.difficulty)">
-                        {{ item.difficulty === 'beginner' ? '初级'
-                          : item.difficulty === 'intermediate' ? '中级' : '高级' }}
+                        {{ formatText(difficultyLevels, item.difficulty) }}
                       </UBadge>
-                      <span class="text-sm text-gray-500">{{ item.createdAt }}</span>
+                      <NuxtTime
+                        :datetime="item.createdAt"
+                        year="numeric"
+                        month="long"
+                        day="numeric"
+                        hour="2-digit"
+                        minute="2-digit"
+                        second="2-digit"
+                      />
                     </div>
                   </div>
                 </div>
@@ -407,6 +469,30 @@ const calcPercentage = (value) => {
                             class="w-full"
                           />
                         </UFormField>
+
+                        <UFormField
+                          v-if="editingMaterial.type === appConfig.appInfo.meterialTypeEnum.word"
+                          label="音标"
+                          name="phoneticSymbol"
+                        >
+                          <UInput
+                            v-model="editingMaterial.phoneticSymbol"
+                            placeholder="输入单词音标"
+                          />
+                        </UFormField>
+
+                        <UFormField
+                          v-if="editingMaterial.type === appConfig.appInfo.meterialTypeEnum.word"
+                          label="词性"
+                          name="wordType"
+                        >
+                          <USelect
+                            v-model="editingMaterial.wordType"
+                            :items="wordTypes"
+                            placeholder="选择词性"
+                          />
+                        </UFormField>
+
                         <UFormField
                           label="内容"
                           name="content"
@@ -452,14 +538,50 @@ const calcPercentage = (value) => {
                     </template>
                   </UModal>
 
-                  <UButton
-                    icon="i-lucide-trash"
-                    variant="outline"
-                    color="error"
-                    size="sm"
-                    @click="handleDelete(item)"
-                  />
+                  <UModal
+                    v-model:open="deleteModalState"
+                    title="提醒"
+                  >
+                    <UButton
+                      icon="i-lucide-trash"
+                      variant="outline"
+                      color="error"
+                      size="sm"
+                      @click="handleDelete(item)"
+                    />
+
+                    <template #header>
+                      <h2>提醒</h2>
+                    </template>
+
+                    <template #body>
+                      <div class="text-center text-xl">
+                        确定删除学习资料： {{ editingMaterial.content }} 吗？
+                      </div>
+                    </template>
+
+                    <template #footer>
+                      <UButton
+                        label="取消"
+                        variant="subtle"
+                        @click="closeDeleteModal"
+                      />
+                      <UButton
+                        label="确定"
+                        color="success"
+                        type="submit"
+                        @click="confirmDelete(editingMaterial)"
+                      />
+                    </template>
+                  </UModal>
                 </div>
+              </div>
+
+              <div
+                v-if="learningMaterials.length === 0"
+                class="p-6 text-center"
+              >
+                暂无数据
               </div>
             </div>
           </UCard>

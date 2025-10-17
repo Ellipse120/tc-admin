@@ -2,16 +2,18 @@
 export interface User {
   id: string
   username: string
-  role: 'teacher' | 'student'
+  role: number | 'teacher' | 'student'
   email: string
 }
 
 export interface LearningMaterial {
   id: string
-  type: 'word' | 'sentence' | 'phrase'
+  type: number
   content: string
   translation: string
-  difficulty: 'beginner' | 'intermediate' | 'advanced'
+  phoneticSymbol?: string
+  wordType?: number
+  difficulty: number
   createdBy: string
   createdAt: string
 }

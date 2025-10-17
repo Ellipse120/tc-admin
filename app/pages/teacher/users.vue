@@ -8,8 +8,6 @@ const toast = useToast()
 const appConfig = useAppConfig()
 
 const UButton = resolveComponent('UButton')
-const UPopover = resolveComponent('UPopover')
-const UFieldGroup = resolveComponent('UFieldGroup')
 
 const { data, refresh, pending } = await useAPI('/Account/listAllUser')
 const users = computed(() => data.value?.list)
@@ -79,9 +77,9 @@ const confirmDelete = async (user) => {
     method: 'delete'
   })
 
-  deleteModalOpen.value = false
-  toast.add({ title: response || '删除成功', color: 'success' })
   await refresh()
+  toast.add({ title: response || '删除成功', color: 'success' })
+  deleteModalOpen.value = false
 }
 
 function batchImport() {

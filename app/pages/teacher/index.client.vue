@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouteQuery } from '@vueuse/router'
-import type { LearningMaterial } from '~/shared/types'
+import type { LearningMaterial, StatisticInfo } from '~/shared/types'
 import { materialSchema } from '~/shared/zschema'
 
 definePageMeta({
@@ -26,6 +26,8 @@ const newMaterial = reactive<Partial<LearningMaterial>>({
   wordType: undefined,
   difficulty: appConfig.appInfo.difficultyLevelEnum.easy
 })
+
+const { data: statisticInfo } = await useAPI<StatisticInfo>('/Statistic')
 
 const getDifficultyColor = (difficulty: number) => {
   switch (difficulty) {
@@ -118,10 +120,8 @@ const confirmDelete = async (item: LearningMaterial) => {
 
 // 统计数据
 const students = ref(appConfig.mockData.mockUsers.filter(u => u.role === 'student'))
-// const learningMaterials = ref(appConfig.mockData.mockLearningMaterials)
 const studentProgressList = ref(appConfig.mockData.mockStudentProgress)
-const totalMaterials = learningMaterials.value?.length || 0
-const totalStudents = students.value.length
+const totalMaterials = (learningMaterials.value as Array<LearningMaterial>).length || 0
 
 const activeStudents = studentProgressList.value.filter((p) => {
   const lastStudy = new Date(p.lastStudyDate)
@@ -201,7 +201,7 @@ const calcPercentage = (value) => {
 </script>
 
 <template>
-  <div class="">
+  <div>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-2">
       <UCard class="flex items-center justify-start">
         <div>
@@ -217,7 +217,7 @@ const calcPercentage = (value) => {
                 学习资料
               </p>
               <p class="text-2xl font-bold">
-                {{ totalMaterials }}
+                {{ statisticInfo?.totalMaterials }}
               </p>
             </div>
           </div>
@@ -238,7 +238,7 @@ const calcPercentage = (value) => {
                 学生总数
               </p>
               <p class="text-2xl font-bold">
-                {{ totalStudents }}
+                {{ statisticInfo?.totalStudents }}
               </p>
             </div>
           </div>
@@ -259,7 +259,7 @@ const calcPercentage = (value) => {
                 活跃学生
               </p>
               <p class="text-2xl font-bold">
-                {{ activeStudents }}
+                {{ statisticInfo?.activeStudents }}
               </p>
             </div>
           </div>
@@ -280,7 +280,7 @@ const calcPercentage = (value) => {
                 平均正确率
               </p>
               <p class="text-2xl font-bold">
-                {{ averageAccuracy }}%
+                {{ statisticInfo?.averageAccuracy }}%
               </p>
             </div>
           </div>

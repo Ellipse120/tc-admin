@@ -13,21 +13,7 @@ useSeoMeta({
 })
 
 const toast = useToast()
-
 const appConfig = useAppConfig()
-
-const roles = ref([
-  {
-    label: '教师',
-    icon: 'i-lucide-users',
-    value: 'teacher'
-  },
-  {
-    label: '学生',
-    icon: 'i-lucide-graduation-cap',
-    value: 'student'
-  }
-])
 
 const fields = [
   {
@@ -122,14 +108,7 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
         还没有账号? <ULink
           to="/signup"
           class="text-primary font-medium"
-        >注册</ULink>.
-
-        <UFormField label="身份选择">
-          <UTabs
-            v-model="role"
-            :items="roles"
-          />
-        </UFormField>
+        >注册</ULink>
       </div>
     </template>
 
@@ -145,30 +124,7 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
       点击登陆，即表示您同意我们的 <ULink
         to="/"
         class="text-primary font-medium"
-      >服务条款</ULink>.
-
-      <UCard class="mt-2">
-        <template #header>
-          <p class="text-gray-600">
-            测试账号：
-          </p>
-        </template>
-
-        <div class="">
-          <div
-            v-for="u in appConfig.mockData.mockUsers"
-            :key="u.id"
-          >
-            <p><strong>{{ u.role }}：</strong> {{ u.email }}</p>
-          </div>
-        </div>
-
-        <template #footer>
-          <p class="text-gray-500 mt-2">
-            密码可以任意填写
-          </p>
-        </template>
-      </UCard>
+      >服务条款</ULink>
     </template>
   </UAuthForm>
 </template>

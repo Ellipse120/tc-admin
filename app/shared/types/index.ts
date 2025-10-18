@@ -63,3 +63,10 @@ export type ResponseUser = {
     wordMasteries: []
   }
 }
+
+export interface StatisticInfo {
+  totalMaterials: number
+  totalStudents: number
+  activeStudents: number
+  averageAccuracy: number
+}

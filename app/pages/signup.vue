@@ -13,41 +13,43 @@ useSeoMeta({
 
 const toast = useToast()
 
-const fields = [{
-  name: 'name',
-  type: 'text' as const,
-  label: 'Name',
-  placeholder: 'Enter your name'
-}, {
-  name: 'email',
-  type: 'text' as const,
-  label: 'Email',
-  placeholder: 'Enter your email'
-}, {
-  name: 'password',
-  label: 'Password',
-  type: 'password' as const,
-  placeholder: 'Enter your password'
-}]
+const fields = [
+  {
+    name: 'email',
+    type: 'text' as const,
+    label: '用户名或者电子邮箱',
+    placeholder: '请输入您的用户名或者电子邮箱',
+    required: true
+  },
+  {
+    name: 'password',
+    label: '密码',
+    type: 'password' as const,
+    placeholder: '请输入您的密码',
+    required: true
 
-const providers = [{
-  label: 'Google',
-  icon: 'i-simple-icons-google',
-  onClick: () => {
-    toast.add({ title: 'Google', description: 'Login with Google' })
   }
-}, {
-  label: 'GitHub',
-  icon: 'i-simple-icons-github',
-  onClick: () => {
-    toast.add({ title: 'GitHub', description: 'Login with GitHub' })
+]
+
+const providers = [
+  {
+    label: 'Google',
+    icon: 'i-simple-icons-google',
+    onClick: () => {
+      toast.add({ title: 'Google', description: 'Login with Google' })
+    }
+  }, {
+    label: 'GitHub',
+    icon: 'i-simple-icons-github',
+    onClick: () => {
+      toast.add({ title: 'GitHub', description: 'Login with GitHub' })
+    }
   }
-}]
+]
 
 const schema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  email: z.string().email('Invalid email'),
-  password: z.string().min(8, 'Must be at least 8 characters')
+  email: z.union([z.email('无效电子邮箱'), z.string('不能为空').min(1)]),
+  password: z.string().min(6, '至少6个字符')
 })
 
 type Schema = z.output<typeof schema>
@@ -62,22 +64,23 @@ function onSubmit(payload: FormSubmitEvent<Schema>) {
     :fields="fields"
     :schema="schema"
     :providers="providers"
-    title="Create an account"
-    :submit="{ label: 'Create account' }"
+    separator="或者"
+    title="注册"
+    :submit="{ label: '创建账号' }"
     @submit="onSubmit"
   >
     <template #description>
-      Already have an account? <ULink
+      已经有账号了? <ULink
         to="/login"
         class="text-primary font-medium"
-      >Login</ULink>.
+      >登录</ULink>
     </template>
 
     <template #footer>
-      By signing up, you agree to our <ULink
+      点击创建账号，即表示您同意我们的  <ULink
         to="/"
         class="text-primary font-medium"
-      >Terms of Service</ULink>.
+      >服务条款</ULink>.
     </template>
   </UAuthForm>
 </template>

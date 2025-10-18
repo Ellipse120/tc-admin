@@ -7,7 +7,8 @@ export default defineNuxtConfig({
     '@nuxt/content',
     '@vueuse/nuxt',
     'nuxt-og-image',
-    'nuxt-auth-utils'
+    'nuxt-auth-utils',
+    'reka-ui/nuxt'
   ],
 
   devtools: {

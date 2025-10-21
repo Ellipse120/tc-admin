@@ -11,8 +11,6 @@ useSeoMeta({
   ogDescription: description
 })
 
-defineOgImageComponent('English AI Learning Saas')
-
 const isYearly = ref('0')
 
 const items = ref([

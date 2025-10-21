@@ -50,6 +50,12 @@ export default defineNuxtConfig({
     }
   },
 
+  vite: {
+    build: {
+      sourcemap: true
+    }
+  },
+
   eslint: {
     config: {
       stylistic: {

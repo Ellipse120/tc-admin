@@ -8,6 +8,7 @@ const toast = useToast()
 const appConfig = useAppConfig()
 
 const UButton = resolveComponent('UButton')
+const UCheckbox = resolveComponent('UCheckbox')
 
 const { data, refresh, pending } = await useAPI('/Account/listAllUser')
 const users = computed(() => data.value?.list)
@@ -42,6 +43,7 @@ const columns = [
 ]
 
 const isModalOpen = ref(false)
+const [isConfigModalOpen, toggleConfigModal] = useToggle()
 const defaultUser = {
   id: null,
   name: null,
@@ -116,6 +118,71 @@ function closeModal() {
   isModalOpen.value = false
   currentUser.value = { ...defaultUser }
 }
+
+const learningMaterialColumns = [
+  {
+    id: 'select',
+    header: ({ table }) => h(UCheckbox, {
+      'modelValue': table.getIsSomePageRowsSelected() ? 'indeterminate' : table.getIsAllPageRowsSelected(),
+      'onUpdate:modelValue': value => table.toggleAllPageRowsSelected(!!value),
+      'aria-label': 'Select all'
+    }),
+    cell: ({ row }) => h(UCheckbox, {
+      'modelValue': row.getIsSelected(),
+      'onUpdate:modelValue': value => row.toggleSelected(!!value),
+      'aria-label': 'Select row'
+    }),
+    enableSorting: false,
+    enableHiding: false
+  },
+  {
+    accessorKey: 'type',
+    header: '类型'
+  },
+  {
+    accessorKey: 'content',
+    header: '内容'
+  },
+  {
+    accessorKey: 'translation',
+    header: '翻译'
+  },
+  {
+    accessorKey: 'difficulty',
+    header: '难度'
+  },
+  {
+    accessorKey: 'createdAt',
+    header: '创建时间',
+    cell: ({ row }) => {
+      return new Date(row.getValue('createdAt')).toLocaleString('zh-CN', {
+        year: 'numeric',
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      })
+    }
+  }
+]
+
+const learningMaterials = ref([])
+const configLearningMaterials = async (user) => {
+  currentUser.value = { ...user }
+  const { data, pending } = await useAPI('/LearningMaterials/ListVocabularyMaterials')
+  learningMaterials.value = data.value || []
+  toggleConfigModal(true)
+}
+
+const closeConfigModal = () => {
+  toggleConfigModal(false)
+}
+
+const confirmConfig = async (user) => {
+
+}
 </script>
 
 <template>
@@ -159,6 +226,17 @@ function closeModal() {
           />
 
           <UButton
+            icon="i-lucide-file-user"
+            variant="outline"
+            color="success"
+            size="sm"
+            :loading="pending"
+            loading-icon="i-lucide-loader"
+            title="分配学习资料"
+            @click="configLearningMaterials(row.original)"
+          />
+
+          <UButton
             icon="i-lucide-trash"
             variant="outline"
             color="error"
@@ -170,10 +248,10 @@ function closeModal() {
       </template>
     </UTable>
 
-    <UModal v-model:open="isModalOpen">
-      <template #header>
-        <h2>{{ currentUser.id ? '编辑' : '添加' }}</h2>
-      </template>
+    <UModal
+      v-model:open="isModalOpen"
+      :title="`${currentUser.id ? '编辑' : '添加'} `"
+    >
       <template #body>
         <UForm @submit="saveUser(currentUser)">
           <UFormField
@@ -235,11 +313,43 @@ function closeModal() {
       </template>
     </UModal>
 
-    <UModal v-model:open="deleteModalOpen">
-      <template #header>
-        <h2>提醒</h2>
+    <UModal
+      v-model:open="isConfigModalOpen"
+      :title="`配置 ${currentUser.userName} 的学习资料`"
+      :ui="{
+        content: 'w-2xl!'
+      }"
+    >
+      <template #body>
+        <div>
+          <UTable
+            ref="configTable"
+            :data="learningMaterials"
+            :columns="learningMaterialColumns"
+            sticky
+          />
+        </div>
       </template>
 
+      <template #footer>
+        <UButton
+          label="取消"
+          variant="subtle"
+          @click="closeConfigModal"
+        />
+        <UButton
+          label="确定"
+          color="success"
+          type="submit"
+          @click="confirmConfig(currentUser)"
+        />
+      </template>
+    </UModal>
+
+    <UModal
+      v-model:open="deleteModalOpen"
+      title="提醒"
+    >
       <template #body>
         <div class="text-center text-xl">
           确定删除用户： {{ currentUser.name }} 吗？

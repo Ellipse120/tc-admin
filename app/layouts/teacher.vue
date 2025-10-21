@@ -2,12 +2,11 @@
 import type { ResponseUser } from '~/shared/types'
 
 const appConfig = useAppConfig()
-const { user, logout, checkIsLoggedIn } = useUser()
-const loggedIn = ref(checkIsLoggedIn())
+const { user, logout, isLoggedIn } = useUser()
 
 const onLogout = async () => {
   logout()
-  await navigateTo('/login')
+  await navigateTo('/')
 }
 </script>
 
@@ -31,7 +30,7 @@ const onLogout = async () => {
           <UColorModeButton />
 
           <UButton
-            v-if="loggedIn"
+            v-if="isLoggedIn"
             label="退出"
             icon="i-lucide-log-in"
             color="neutral"
@@ -40,7 +39,7 @@ const onLogout = async () => {
           />
 
           <UButton
-            v-if="!loggedIn"
+            v-if="!isLoggedIn"
             label="登录"
             color="neutral"
             variant="outline"
@@ -49,7 +48,7 @@ const onLogout = async () => {
           />
 
           <UButton
-            v-if="!loggedIn"
+            v-if="!isLoggedIn"
             label="注册"
             color="neutral"
             trailing-icon="i-lucide-arrow-right"

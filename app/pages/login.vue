@@ -44,15 +44,14 @@ const schema = z.object({
 
 type Schema = z.output<typeof schema>
 
-const role = ref('teacher')
 const { $api } = useNuxtApp()
+
 async function onSubmit(payload: FormSubmitEvent<Schema>) {
   const data = await $api<ResponseUser>('/Account/login', {
     method: 'POST',
     body: {
       ...payload.data,
-      username: payload.data.email,
-      role: role.value
+      username: payload.data.email
     }
   }).catch((err) => {
     toast.add({

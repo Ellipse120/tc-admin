@@ -15,6 +15,10 @@ export default defineNuxtConfig({
     enabled: true
   },
 
+  app: {
+    layoutTransition: { name: 'layout', mode: 'out-in' }
+  },
+
   css: ['~/assets/css/main.css'],
 
   ui: {

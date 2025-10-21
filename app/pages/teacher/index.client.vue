@@ -121,7 +121,7 @@ const confirmDelete = async (item: LearningMaterial) => {
 // 统计数据
 const students = ref(appConfig.mockData.mockUsers.filter(u => u.role === 'student'))
 const studentProgressList = ref(appConfig.mockData.mockStudentProgress)
-const totalMaterials = (learningMaterials.value as Array<LearningMaterial>).length || 0
+const totalMaterials = (learningMaterials.value as Array<LearningMaterial>)?.length || 0
 
 const activeStudents = studentProgressList.value.filter((p) => {
   const lastStudy = new Date(p.lastStudyDate)

@@ -119,6 +119,7 @@ function closeModal() {
   currentUser.value = { ...defaultUser }
 }
 
+const configTable = useTemplateRef('configTable')
 const learningMaterialColumns = [
   {
     id: 'select',
@@ -168,11 +169,12 @@ const learningMaterialColumns = [
   }
 ]
 
-const learningMaterials = ref([])
+const { data: learningMaterials, refresh: refreshLearningMaterials } = await useAPI('/LearningMaterials/ListVocabularyMaterials')
 const configLearningMaterials = async (user) => {
   currentUser.value = { ...user }
-  const { data, pending } = await useAPI('/LearningMaterials/ListVocabularyMaterials')
-  learningMaterials.value = data.value || []
+  // const data = await $api('/LearningMaterials/ListVocabularyMaterials')
+
+  // learningMaterials.value = data || []
   toggleConfigModal(true)
 }
 
@@ -180,8 +182,19 @@ const closeConfigModal = () => {
   toggleConfigModal(false)
 }
 
-const confirmConfig = async (user) => {
+const confirmConfig = async () => {
+  const learningMaterialIds = configTable.value.tableApi.getSelectedRowModel().rows.map(r => r.original.id)
 
+  if (learningMaterialIds.length === 0) {
+    toast.add({ title: '请至少选择一项学习资料', color: 'warning' })
+    return
+  }
+
+  const selectedData = {
+    userId: currentUser.value.id,
+    learningMaterialIds
+  }
+  console.log(selectedData)
 }
 </script>
 
@@ -189,7 +202,7 @@ const confirmConfig = async (user) => {
   <div>
     <div class="flex gap-4">
       <UButton
-        label="查询"
+        label="刷新"
         color="secondary"
         @click="refresh()"
       />
@@ -226,6 +239,7 @@ const confirmConfig = async (user) => {
           />
 
           <UButton
+            v-if="row.original.role === appConfig.appInfo.roleEnum.student"
             icon="i-lucide-file-user"
             variant="outline"
             color="success"
@@ -317,7 +331,7 @@ const confirmConfig = async (user) => {
       v-model:open="isConfigModalOpen"
       :title="`配置 ${currentUser.userName} 的学习资料`"
       :ui="{
-        content: 'w-2xl!'
+        content: 'max-w-4xl'
       }"
     >
       <template #body>
@@ -332,6 +346,11 @@ const confirmConfig = async (user) => {
       </template>
 
       <template #footer>
+        <UButton
+          label="刷新"
+          color="secondary"
+          @click="refreshLearningMaterials"
+        />
         <UButton
           label="取消"
           variant="subtle"

@@ -1,0 +1,1 @@
+import{bf as s}from"#entry";function r(e,i,f){const t=e.findIndex(n=>s(n,i)),d=e.findIndex(n=>s(n,f));if(t===-1||d===-1)return[];const[o,x]=[t,d].sort((n,I)=>n-I);return e.slice(o,x+1)}export{r as f};

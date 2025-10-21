@@ -1,0 +1,4 @@
+import{ah as s,u as c,ai as m,o as v,aj as y,ak as p,al as g,am as h}from"#entry";async function O(e){const t=await e(),a=t.default||t;return $(a)}const d=new WeakMap;function $(e){if(d.has(e))return d.get(e);const t={...e};return t.render?t.render=(a,o,u,n,l,r)=>n.mounted$??a.mounted$?s(e.render?.bind(a)(a,o,u,n,l,r)):s("div"):t.template&&=`
+      <template v-if="mounted$">${e.template}</template>
+      <template v-else><div></div></template>
+    `,t.setup=(a,o)=>{const u=c(),n=m(u.isHydrating===!1);g(h,!0);const l=p();l&&(l._nuxtClientOnly=!0),v(()=>{n.value=!0});const r=e.setup?.(a,o)||{};return y(r)?Promise.resolve(r).then(i=>typeof i!="function"?(i||={},i.mounted$=n,i):(...f)=>n.value||!u.isHydrating?s(i(...f)):s("div")):typeof r=="function"?(...i)=>n.value||!u.isHydrating?s(r(...i)):s("div"):Object.assign(r,{mounted$:n})},d.set(e,t),t}export{O as createClientPage};

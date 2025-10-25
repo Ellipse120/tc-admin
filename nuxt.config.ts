@@ -11,6 +11,12 @@ export default defineNuxtConfig({
     'reka-ui/nuxt'
   ],
 
+  $production: {
+    experimental: {
+      checkOutdatedBuildInterval: 3600000 // 1h
+    }
+  },
+
   devtools: {
     enabled: true
   },
@@ -37,10 +43,6 @@ export default defineNuxtConfig({
     '/teacher/**': { ssr: false },
     '/student/**': { ssr: false },
     '/login': { ssr: false }
-  },
-
-  experimental: {
-    checkOutdatedBuildInterval: 3600000 // 1h
   },
 
   compatibilityDate: '2024-07-11',

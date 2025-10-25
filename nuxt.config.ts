@@ -39,6 +39,10 @@ export default defineNuxtConfig({
     '/login': { ssr: false }
   },
 
+  experimental: {
+    checkOutdatedBuildInterval: 3600000 // 1h
+  },
+
   compatibilityDate: '2024-07-11',
 
   nitro: {

@@ -39,9 +39,8 @@ export default defineNuxtConfig({
 
   routeRules: {
     '/docs': { redirect: '/docs/getting-started', prerender: false },
-    // !FIXME 由于SSR模式下的isCE总是报错，因此禁用服务端渲染
-    '/teacher/**': { ssr: false },
-    '/student/**': { ssr: false },
+    '/teacher/**': { appMiddleware: 'auth' },
+    '/student/**': { appMiddleware: 'auth' },
     '/login': { ssr: false }
   },
 

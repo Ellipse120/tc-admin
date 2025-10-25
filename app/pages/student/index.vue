@@ -9,7 +9,6 @@ const appConfig = useAppConfig()
 const learningMaterials = ref(appConfig.mockData.mockLearningMaterials)
 const studyRecords = ref(appConfig.mockData.mockStudyRecords)
 const studyProgress = ref(appConfig.mockData.mockStudentProgress)
-const totalMaterials = ref(appConfig.mockData.mockLearningMaterials)
 const studentProgress = ref(appConfig.mockData.mockStudentProgress.find(p => p.studentId === user.value?.user.id) || {
   studentId: user.value?.user.id,
   totalStudied: 0,

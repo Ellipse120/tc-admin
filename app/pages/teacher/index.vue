@@ -4,8 +4,7 @@ import type { LearningMaterial, StatisticInfo } from '~/shared/types'
 import { materialSchema } from '~/shared/zschema'
 
 definePageMeta({
-  layout: 'teacher',
-  middleware: ['auth']
+  layout: 'teacher'
 })
 
 const appConfig = useAppConfig()
@@ -578,7 +577,7 @@ const calcPercentage = (value) => {
               </div>
 
               <div
-                v-if="learningMaterials.length === 0"
+                v-if="learningMaterials?.length === 0"
                 class="p-6 text-center"
               >
                 暂无数据

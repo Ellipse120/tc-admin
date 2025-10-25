@@ -14,7 +14,10 @@ export default defineNuxtPlugin((nuxtApp) => {
     },
     async onResponseError({ response }) {
       if (!response._data?.success) {
-        toast.add({ title: `${response._data?.message}` || '未知错误!', color: 'error' })
+        toast.add({
+          title: response._data?.message || '未知错误!接口可能未返回信息',
+          color: 'error'
+        })
       }
 
       if (response.status === 401) {

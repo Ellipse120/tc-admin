@@ -15,7 +15,7 @@
     "@iconify-json/simple-icons": "^1.2.53",
     "@nuxt/content": "^3.7.1",
     "@nuxt/image": "^1.11.0",
-    "@nuxt/ui": "^4.0.0",
+    "@nuxt/ui": "^4.1.0",
     "@standard-schema/spec": "^1.0.0",
     "@vueuse/nuxt": "^13.9.0",
     "@vueuse/router": "^13.9.0",

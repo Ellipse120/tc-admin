@@ -63,7 +63,8 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
 
   if (data?.token) {
     const cookie = useCookie('userInfo')
-    cookie.value &&= JSON.stringify(data)
+    cookie.value = data
+    refreshCookie('userInfo')
     useUser(data)
 
     toast.add({

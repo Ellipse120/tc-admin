@@ -6,6 +6,7 @@ export function useUser(userInfo?: ResponseUser) {
 
   if (userInfo) {
     user.value = userInfo
+    refreshCookie('userInfo')
   }
 
   const isLoggedIn = computed(() => !!user?.value?.token)

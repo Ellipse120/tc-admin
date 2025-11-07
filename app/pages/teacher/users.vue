@@ -5,8 +5,7 @@ import { z } from 'zod'
 import { CalendarDate, DateFormatter, getLocalTimeZone } from '@internationalized/date'
 
 definePageMeta({
-  layout: 'teacher',
-  middleware: ['auth']
+  layout: 'teacher'
 })
 
 const toast = useToast()

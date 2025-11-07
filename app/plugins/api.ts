@@ -2,8 +2,6 @@ export default defineNuxtPlugin((nuxtApp) => {
   const userInfo = useCookie('userInfo')
   const userAuth = userInfo.value?.token
 
-  console.log(userAuth)
-
   const config = useRuntimeConfig()
   const toast = useToast()
 

@@ -1,1 +1,0 @@
-import{h as a,x as r,G as s}from"./C5HeKxGp.js";function l(e){const o=a("userInfo",{}),u=r();e&&(o.value=e);const t=s(()=>!!o?.value?.token),n=s(()=>o.value?.user.role===u.appInfo.roleEnum.student);return{user:o,isLoggedIn:t,isStu:n,logout:()=>{o.value=void 0}}}export{l as u};

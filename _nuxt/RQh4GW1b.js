@@ -1,0 +1,1 @@
+import{h as r,x as a,G as s,aE as i}from"./CweTmiC-.js";function l(e){const o=r("userInfo",{}),u=a();e&&(o.value=e,i("userInfo"));const n=s(()=>!!o?.value?.token),t=s(()=>o.value?.user.role===u.appInfo.roleEnum.student);return{user:o,isLoggedIn:n,isStu:t,logout:()=>{o.value=void 0}}}export{l as u};

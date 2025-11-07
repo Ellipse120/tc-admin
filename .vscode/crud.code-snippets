@@ -1,0 +1,297 @@
+{
+	// Place your tc-admin workspace snippets here. Each snippet is defined under a snippet name and has a scope, prefix, body and
+	// description. Add comma separated ids of the languages where the snippet is applicable in the scope field. If scope
+	// is left empty or omitted, the snippet gets applied to all languages. The prefix is what is
+	// used to trigger the snippet and the body will be expanded and inserted. Possible variables are:
+	// $1, $2 for tab stops, $0 for the final cursor position, and ${1:label}, ${2:another} for placeholders.
+	// Placeholders with the same ids are connected.
+	// Example:
+	// "Print to console": {
+	// 	"scope": "javascript,typescript",
+	// 	"prefix": "log",
+	// 	"body": [
+	// 		"console.log('$1');",
+	// 		"$2"
+	// 	],
+	// 	"description": "Log output to console"
+	// }
+  "crud": {
+    "isFileTemplate": true,
+    "body": "<script setup>
+import { parseDate, DateFormatter, getLocalTimeZone } from '@internationalized/date'
+import { learningPlanSchema } from '~/shared/zschema'
+
+definePageMeta({
+  layout: 'teacher',
+  middleware: ['auth']
+})
+
+const toast = useToast()
+const { $api } = useNuxtApp()
+const df = new DateFormatter('zh-CN', {
+  dateStyle: 'medium'
+})
+
+const { data, refresh, pending } = await useAPI('/LearingPlan/listPlans')
+
+const columns = [
+  {
+    accessorKey: 'id',
+    header: 'ID'
+  },
+  {
+    accessorKey: 'title',
+    header: '标题'
+  },
+  {
+    accessorKey: 'description',
+    header: '描述'
+  },
+  {
+    accessorKey: 'student.userName',
+    header: '学生'
+  },
+  {
+    accessorKey: 'createdAt',
+    header: '创建时间',
+    cell: ({ row }) => {
+      return new Date(row.getValue('createdAt')).toLocaleString('zh-CN', {
+        year: 'numeric',
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      })
+    }
+  },
+  {
+    accessorKey: 'actions',
+    header: '操作'
+  }
+]
+
+const [modalOpen, toggleModalOpen] = useToggle()
+const [deleteModalOpen, toggleDeleteModalOpen] = useToggle()
+const model = ref({
+  id: undefined,
+  title: '',
+  description: '',
+  studentId: null,
+  materialIds: {},
+  startDate: null,
+  endDate: null,
+  dateRange: {
+    start: null,
+    end: null
+  }
+})
+
+const openModal = async (row) => {
+  if (row && row.id) {
+    const res = await $api(`LearingPlan/GetPlanById/${row.id}`)
+
+    model.value = {
+      ...row,
+      dateRange: {
+        start: parseDate(res.startDate),
+        end: parseDate(res.endDate)
+      }
+    }
+  }
+
+  toggleModalOpen(true)
+}
+
+const handleDelete = (row) => {
+  model.value = { ...row }
+  toggleDeleteModalOpen(true)
+}
+
+const closeDeleteModal = () => {
+  toggleDeleteModalOpen(false)
+}
+
+const confirmDelete = () => {
+  toast.add({
+    title: '删除成功',
+    color: 'success'
+  })
+  toggleDeleteModalOpen(false)
+}
+
+const saveModel = () => {
+  toast.add({
+    title: '保存成功',
+    color: 'success'
+  })
+  toggleModalOpen(false)
+}
+
+const closeModal = () => {
+  toggleModalOpen(false)
+}
+
+function goBack() {
+  navigateTo('/teacher?tab=student')
+}
+</script>
+
+<template>
+  <div>
+    <div class="flex gap-4">
+      <UButton
+        label="刷新"
+        color="secondary"
+        @click="refresh()"
+      />
+      <UButton
+        label="添加"
+        @click="openModal()"
+      />
+      <UButton
+        label="返回"
+        variant="subtle"
+        @click="goBack()"
+      />
+    </div>
+
+    <UTable
+      :data="data"
+      :columns="columns"
+      :loading="pending"
+    >
+      <template #actions-cell="{ row }">
+        <div class="space-x-2">
+          <UButton
+            icon="i-lucide-edit"
+            variant="outline"
+            color="info"
+            size="sm"
+            title="编辑"
+            @click="openModal(row.original)"
+          />
+
+          <UButton
+            icon="i-lucide-trash"
+            variant="outline"
+            color="error"
+            size="sm"
+            title="删除"
+            @click="handleDelete(row.original)"
+          />
+        </div>
+      </template>
+    </UTable>
+
+    <UModal
+      v-model:open="modalOpen"
+      :title="`${model.id ? '编辑' : '添加'} `"
+    >
+      <template #body>
+        <UForm
+          :schema="learningPlanSchema"
+          @submit="saveModel()"
+        >
+          <UFormField
+            label="学习计划标题"
+            name="title"
+          >
+            <UInput
+              v-model="model.title"
+              placeholder="输入学习计划标题"
+            />
+          </UFormField>
+
+          <UFormField
+            label="描述"
+            name="description"
+          >
+            <UInput
+              v-model="model.description"
+              placeholder="请输入描述"
+            />
+          </UFormField>
+
+          <UFormField
+            label="开始/结束日期"
+            name="dateRange"
+          >
+            <UPopover>
+              <UButton
+                color="neutral"
+                variant="subtle"
+                icon="i-lucide-calendar"
+              >
+                <template v-if="model.dateRange.start">
+                  <template v-if="model.dateRange.end">
+                    {{ df.format(model.dateRange.start.toDate(getLocalTimeZone())) }} - {{ df.format(model.dateRange.end.toDate(getLocalTimeZone())) }}
+                  </template>
+
+                  <template v-else>
+                    {{ df.format(model.dateRange.start.toDate(getLocalTimeZone())) }}
+                  </template>
+                </template>
+                <template v-else>
+                  请选择开始/结束日期
+                </template>
+              </UButton>
+
+              <template #content>
+                <UCalendar
+                  v-model="model.dateRange"
+                  class="p-2"
+                  :number-of-months="2"
+                  range
+                  locale="zh-CN"
+                />
+              </template>
+            </UPopover>
+          </UFormField>
+        </UForm>
+      </template>
+      <template #footer>
+        <UButton
+          label="取消"
+          variant="subtle"
+          @click="closeModal"
+        />
+        <UButton
+          label="保存"
+          color="success"
+          @click="saveModel"
+        />
+      </template>
+    </UModal>
+
+    <UModal
+      v-model:open="deleteModalOpen"
+      title="提醒"
+    >
+      <template #body>
+        <div class="text-center text-xl">
+          确定删除： {{ model.title }} 吗？
+        </div>
+      </template>
+
+      <template #footer>
+        <UButton
+          label="取消"
+          variant="subtle"
+          @click="closeDeleteModal"
+        />
+        <UButton
+          label="确定"
+          color="success"
+          type="submit"
+          @click="confirmDelete()"
+        />
+      </template>
+    </UModal>
+  </div>
+</template>
+",
+    "description": "CRUD page"
+  }
+}

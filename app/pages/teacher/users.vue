@@ -1,4 +1,9 @@
 <script setup>
+import { z } from 'zod'
+
+// import { learningPlanSchema } from '~/shared/zschema'
+import { CalendarDate, DateFormatter, getLocalTimeZone } from '@internationalized/date'
+
 definePageMeta({
   layout: 'teacher',
   middleware: ['auth']
@@ -79,8 +84,8 @@ const confirmDelete = async (user) => {
     method: 'delete'
   })
 
-  await refresh()
   toast.add({ title: response || '删除成功', color: 'success' })
+  await refresh()
   deleteModalOpen.value = false
 }
 
@@ -119,6 +124,41 @@ function closeModal() {
   currentUser.value = { ...defaultUser }
 }
 
+const learningPlan = reactive({
+  id: undefined,
+  title: '',
+  description: '',
+  studentId: null,
+  materialIds: {},
+  startDate: null,
+  endDate: null,
+  dateRange: {
+    start: null,
+    end: null
+  }
+})
+
+const df = new DateFormatter('zh-CN', {
+  dateStyle: 'medium'
+})
+
+const learningPlanSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().min(1, '必填'),
+  description: z.string().min(1, '必填'),
+  materialIds: z.object({
+    materialIds: z.record(z.string(), z.boolean())
+  }),
+  studentId: z.string().min(1, '必填'),
+  startDate: z.string().min(1, '必填'),
+  endDate: z.string().min(1, '必填'),
+  dateRange: z.object({
+    start: z.custom(val => val instanceof CalendarDate),
+    end: z.custom(val => val instanceof CalendarDate)
+  }).refine(data => data.start && data.end, {
+    message: '请选择开始和结束日期'
+  })
+})
 const configTable = useTemplateRef('configTable')
 const learningMaterialColumns = [
   {
@@ -191,10 +231,23 @@ const confirmConfig = async () => {
   }
 
   const selectedData = {
-    userId: currentUser.value.id,
-    learningMaterialIds
+    title: learningPlan.title,
+    description: learningPlan.description,
+    startDate: learningPlan.dateRange.start ? useDateFormat(learningPlan.dateRange.start.toDate(getLocalTimeZone()), 'YYYY-MM-DD').value : null,
+    endDate: learningPlan.dateRange.end ? useDateFormat(learningPlan.dateRange.end.toDate(getLocalTimeZone()), 'YYYY-MM-DD').value : null,
+    studentId: currentUser.value.id,
+    materialIds: learningMaterialIds
   }
-  console.log(selectedData)
+
+  await $api('/LearingPlan/CreatePlan', {
+    method: 'post',
+    body: selectedData
+  })
+
+  toast.add({
+    title: '配置学习计划成功',
+    color: 'success'
+  })
 }
 </script>
 
@@ -329,19 +382,90 @@ const confirmConfig = async () => {
 
     <UModal
       v-model:open="isConfigModalOpen"
-      :title="`配置 ${currentUser.userName} 的学习资料`"
+      :title="`配置 ${currentUser.userName} 的学习计划`"
       :ui="{
         content: 'max-w-4xl'
       }"
     >
       <template #body>
         <div>
-          <UTable
-            ref="configTable"
-            :data="learningMaterials"
-            :columns="learningMaterialColumns"
-            sticky
-          />
+          <UForm
+            :schema="learningPlanSchema"
+            :state="learningPlan"
+            class="space-y-4 flex flex-col w-full"
+            @submit="confirmConfig"
+          >
+            <UFormField
+              label="学习计划标题"
+              name="title"
+            >
+              <UInput
+                v-model="learningPlan.title"
+                placeholder="输入学习计划标题"
+              />
+            </UFormField>
+
+            <UFormField
+              label="描述"
+              name="description"
+            >
+              <UInput
+                v-model="learningPlan.description"
+                placeholder="请输入描述"
+              />
+            </UFormField>
+
+            <UFormField
+              label="开始/结束日期"
+              name="dateRange"
+            >
+              <UPopover>
+                <UButton
+                  color="neutral"
+                  variant="subtle"
+                  icon="i-lucide-calendar"
+                >
+                  <template v-if="learningPlan.dateRange.start">
+                    <template v-if="learningPlan.dateRange.end">
+                      {{ df.format(learningPlan.dateRange.start.toDate(getLocalTimeZone())) }} - {{ df.format(learningPlan.dateRange.end.toDate(getLocalTimeZone())) }}
+                    </template>
+
+                    <template v-else>
+                      {{ df.format(learningPlan.dateRange.start.toDate(getLocalTimeZone())) }}
+                    </template>
+                  </template>
+                  <template v-else>
+                    请选择开始/结束日期
+                  </template>
+                </UButton>
+
+                <template #content>
+                  <UCalendar
+                    v-model="learningPlan.dateRange"
+                    class="p-2"
+                    :number-of-months="2"
+                    range
+                    locale="zh-CN"
+                  />
+                </template>
+              </UPopover>
+            </UFormField>
+
+            <UFormField
+              label="选择学习资料"
+              name="materialIds"
+              description="请至少选择一项"
+            >
+              <UTable
+                ref="configTable"
+                v-model:row-selection="learningPlan.materialIds"
+                :data="learningMaterials"
+                :columns="learningMaterialColumns"
+                :get-row-id="(row) => row.id"
+                sticky
+              />
+            </UFormField>
+          </UForm>
         </div>
       </template>
 
@@ -359,8 +483,7 @@ const confirmConfig = async () => {
         <UButton
           label="确定"
           color="success"
-          type="submit"
-          @click="confirmConfig(currentUser)"
+          @click="confirmConfig"
         />
       </template>
     </UModal>

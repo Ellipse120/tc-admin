@@ -72,7 +72,6 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
       color: 'success'
     })
 
-    // TODO role 应该是多个
     const redirect = data.user.role !== appConfig.appInfo.roleEnum.student ? '/teacher' : '/student'
 
     return navigateTo(redirect)

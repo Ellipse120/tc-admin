@@ -1,0 +1,388 @@
+<script setup>
+import { parseDate, DateFormatter, getLocalTimeZone } from '@internationalized/date'
+import { learningPlanSchema } from '~/shared/zschema'
+
+definePageMeta({
+  layout: 'teacher',
+  middleware: ['auth']
+})
+
+const toast = useToast()
+const { $api } = useNuxtApp()
+const appConfig = useAppConfig()
+const df = new DateFormatter('zh-CN', {
+  dateStyle: 'medium'
+})
+
+const { data, refresh, pending } = await useAPI('/LearingPlan/listPlans')
+const { data: students, loading: studentsLoading, refresh: refreshStudents } = await useAPI('/Account/listAllUser', {
+  key: 'students',
+  transform: (data) => {
+    return data?.list?.filter(item => item.role === appConfig.appInfo.roleEnum.student)?.map(item => ({
+      label: item.userName,
+      value: item.id
+    }))
+  },
+  lazy: true
+})
+
+const { data: learningMaterials, loading: learningMaterialsLoading, refresh: refreshLearningMaterials } = await useAPI('/LearningMaterials/ListVocabularyMaterials', {
+  key: 'learning-materials',
+  transform: (data) => {
+    return data.map(item => ({
+      label: item.content,
+      value: item.id
+    }))
+  },
+  lazy: true
+})
+
+const columns = [
+  {
+    accessorKey: 'id',
+    header: 'ID'
+  },
+  {
+    accessorKey: 'title',
+    header: '标题'
+  },
+  {
+    accessorKey: 'description',
+    header: '描述'
+  },
+  {
+    accessorKey: 'student.userName',
+    header: '学生'
+  },
+  {
+    accessorKey: 'isDeleted',
+    header: '已删除',
+    cell: ({ row }) => formatText(appConfig.appInfo.booleanOptions, row.getValue('isDeleted'))
+  },
+  {
+    accessorKey: 'createdAt',
+    header: '创建时间',
+    cell: ({ row }) => {
+      return new Date(row.getValue('createdAt')).toLocaleString('zh-CN', {
+        year: 'numeric',
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      })
+    }
+  },
+  {
+    accessorKey: 'actions',
+    header: '操作'
+  }
+]
+
+const [modalOpen, toggleModalOpen] = useToggle()
+const [deleteModalOpen, toggleDeleteModalOpen] = useToggle()
+const model = ref({
+  id: undefined,
+  title: '',
+  description: '',
+  studentId: null,
+  materialIds: {},
+  startDate: null,
+  endDate: null,
+  dateRange: {
+    start: null,
+    end: null
+  }
+})
+
+const openModal = async (row) => {
+  if (row && row.id) {
+    const res = await $api(`LearingPlan/GetPlanById/${row.id}`)
+
+    model.value = {
+      ...row,
+      materialIds: res.items.map(item => item.materialId),
+      dateRange: {
+        start: parseDate(res.startDate),
+        end: parseDate(res.endDate)
+      }
+    }
+  } else {
+    model.value = {
+      id: undefined,
+      title: '',
+      description: '',
+      studentId: null,
+      materialIds: {},
+      startDate: null,
+      endDate: null,
+      dateRange: {
+        start: null,
+        end: null
+      }
+    }
+  }
+
+  toggleModalOpen(true)
+}
+
+const handleDelete = (row) => {
+  model.value = { ...row }
+  toggleDeleteModalOpen(true)
+}
+
+const closeDeleteModal = () => {
+  toggleDeleteModalOpen(false)
+}
+
+const confirmDelete = async () => {
+  const response = await $api(`/LearingPlan/DeletePlan/${model.value.id}`, {
+    method: 'delete'
+  })
+
+  toast.add({ title: response || '删除成功', color: 'success' })
+  toggleDeleteModalOpen(false)
+  await refresh()
+}
+
+const saveModel = async () => {
+  const selectedData = {
+    id: undefined,
+    title: model.value.title,
+    description: model.value.description,
+    startDate: model.value.dateRange.start ? useDateFormat(model.value.dateRange.start.toDate(getLocalTimeZone()), 'YYYY-MM-DD').value : null,
+    endDate: model.value.dateRange.end ? useDateFormat(model.value.dateRange.end.toDate(getLocalTimeZone()), 'YYYY-MM-DD').value : null,
+    studentId: model.value.studentId,
+    materialIds: model.value.materialIds
+  }
+
+  if (model.value.id) {
+    selectedData.id = model.value.id
+    await $api('/LearingPlan/UpdatePlan', {
+      method: 'put',
+      body: selectedData
+    })
+  } else {
+    await $api('/LearingPlan/CreatePlan', {
+      method: 'post',
+      body: selectedData
+    })
+  }
+
+  toast.add({
+    title: '保存成功',
+    color: 'success'
+  })
+  await refresh()
+  toggleModalOpen(false)
+}
+
+const closeModal = () => {
+  toggleModalOpen(false)
+}
+
+function goBack() {
+  navigateTo('/teacher?tab=student')
+}
+</script>
+
+<template>
+  <div>
+    <div class="flex gap-4">
+      <UButton
+        label="刷新"
+        color="secondary"
+        @click="refresh()"
+      />
+      <UButton
+        label="添加"
+        @click="openModal()"
+      />
+      <UButton
+        label="返回"
+        variant="subtle"
+        @click="goBack()"
+      />
+    </div>
+
+    <h3 class="text-base font-semibold leading-6 my-4">
+      学习计划列表
+    </h3>
+
+    <UTable
+      :data="data"
+      :columns="columns"
+      :loading="pending"
+    >
+      <template #actions-cell="{ row }">
+        <div class="space-x-2">
+          <UButton
+            v-if="!row.original.isDeleted"
+            icon="i-lucide-edit"
+            variant="outline"
+            color="info"
+            size="sm"
+            title="编辑"
+            @click="openModal(row.original)"
+          />
+
+          <UButton
+            v-if="!row.original.isDeleted"
+            icon="i-lucide-trash"
+            variant="outline"
+            color="error"
+            size="sm"
+            title="删除"
+            @click="handleDelete(row.original)"
+          />
+        </div>
+      </template>
+    </UTable>
+
+    <UModal
+      v-model:open="modalOpen"
+      :title="`${model.id ? '编辑' : '添加'} `"
+    >
+      <template #body>
+        <UForm
+          :schema="learningPlanSchema"
+          class="space-y-4"
+          @submit="saveModel()"
+        >
+          <UFormField
+            label="学习计划标题"
+            name="title"
+          >
+            <UInput
+              v-model="model.title"
+              placeholder="输入学习计划标题"
+            />
+          </UFormField>
+
+          <UFormField
+            label="描述"
+            name="description"
+          >
+            <UInput
+              v-model="model.description"
+              placeholder="请输入描述"
+            />
+          </UFormField>
+
+          <UFormField
+            label="开始/结束日期"
+            name="dateRange"
+          >
+            <UPopover>
+              <UButton
+                color="neutral"
+                variant="subtle"
+                icon="i-lucide-calendar"
+              >
+                <template v-if="model.dateRange.start">
+                  <template v-if="model.dateRange.end">
+                    {{ df.format(model.dateRange.start.toDate(getLocalTimeZone())) }} - {{ df.format(model.dateRange.end.toDate(getLocalTimeZone())) }}
+                  </template>
+
+                  <template v-else>
+                    {{ df.format(model.dateRange.start.toDate(getLocalTimeZone())) }}
+                  </template>
+                </template>
+                <template v-else>
+                  请选择开始/结束日期
+                </template>
+              </UButton>
+
+              <template #content>
+                <UCalendar
+                  v-model="model.dateRange"
+                  class="p-2"
+                  :number-of-months="2"
+                  range
+                  locale="zh-CN"
+                />
+              </template>
+            </UPopover>
+          </UFormField>
+
+          <UFormField
+            label="学生"
+            name="studentId"
+          >
+            <div class="flex gap-2">
+              <USelect
+                v-model="model.studentId"
+                :items="students"
+                :loading="studentsLoading"
+                placeholder="请选择学生"
+              />
+              <UButton
+                icon="i-lucide-refresh-ccw"
+                color="info"
+                @click="refreshStudents"
+              />
+            </div>
+          </UFormField>
+
+          <UFormField
+            label="学习资料"
+            name="materialIds"
+          >
+            <div class="flex gap-2">
+              <USelect
+                v-model="model.materialIds"
+                :items="learningMaterials"
+                :loading="learningMaterialsLoading"
+                multiple
+                placeholder="请选择学习资料"
+              />
+              <UButton
+                icon="i-lucide-refresh-ccw"
+                color="info"
+                @click="refreshLearningMaterials"
+              />
+            </div>
+          </UFormField>
+        </UForm>
+      </template>
+      <template #footer>
+        <UButton
+          label="取消"
+          variant="subtle"
+          @click="closeModal"
+        />
+        <UButton
+          label="保存"
+          color="success"
+          @click="saveModel"
+        />
+      </template>
+    </UModal>
+
+    <UModal
+      v-model:open="deleteModalOpen"
+      title="提醒"
+    >
+      <template #body>
+        <div class="text-center text-xl">
+          确定删除： {{ model.title }} 吗？
+        </div>
+      </template>
+
+      <template #footer>
+        <UButton
+          label="取消"
+          variant="subtle"
+          @click="closeDeleteModal"
+        />
+        <UButton
+          label="确定"
+          color="success"
+          type="submit"
+          @click="confirmDelete()"
+        />
+      </template>
+    </UModal>
+  </div>
+</template>

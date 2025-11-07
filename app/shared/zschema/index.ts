@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { CalendarDate } from '@internationalized/date'
 
 enum roleEnum {
   teacher = 4,
@@ -31,4 +32,22 @@ export const materialSchema = z.object({
   content: z.string().min(1, '必填'),
   translation: z.string().min(1, '必填'),
   difficulty: z.enum(difficultyLevelEnum)
+})
+
+export const learningPlanSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().min(1, '必填'),
+  description: z.string().min(1, '必填'),
+  materialIds: z.object({
+    materialIds: z.record(z.string(), z.boolean())
+  }),
+  studentId: z.string().min(1, '必填'),
+  startDate: z.string().min(1, '必填'),
+  endDate: z.string().min(1, '必填'),
+  dateRange: z.object({
+    start: z.custom(val => val instanceof CalendarDate),
+    end: z.custom(val => val instanceof CalendarDate)
+  }).refine(data => data.start && data.end, {
+    message: '请选择开始和结束日期'
+  })
 })

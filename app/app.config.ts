@@ -93,6 +93,10 @@ export default defineAppConfig({
       { label: '初级', value: difficultyLevelEnum.easy, engLabel: 'beginner' },
       { label: '中级', value: difficultyLevelEnum.medium, engLabel: 'intermediate' },
       { label: '高级', value: difficultyLevelEnum.hard, engLabel: 'advanced' }
+    ],
+    booleanOptions: [
+      { label: '是', value: true },
+      { label: '否', value: false }
     ]
   },
   mockData: {

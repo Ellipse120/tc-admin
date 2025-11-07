@@ -18,6 +18,16 @@ export interface LearningMaterial {
   createdAt: string
 }
 
+export interface LearningPlan {
+  id: string
+  title: string
+  description: string
+  materialIds: string[]
+  studentId: string
+  startDate: string
+  endDate: string
+}
+
 export interface StudyRecord {
   id: string
   studentId: string

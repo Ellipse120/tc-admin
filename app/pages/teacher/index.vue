@@ -71,6 +71,7 @@ const editingMaterial = ref<Partial<LearningMaterial>>({
   createdAt: '',
   createdBy: ''
 })
+
 const handleEdit = async (item: LearningMaterial) => {
   if (item.id) {
     const u = await $api<LearningMaterial>(`/LearningMaterials/getVocabularyMaterialById/${item.id}`)
@@ -601,6 +602,17 @@ const calcPercentage = (value) => {
                   <UIcon
                     class="w-6 h-6"
                     name="i-lucide-user-round-cog"
+                  />
+                </NuxtLink>
+              </UTooltip>
+
+              <UTooltip text="学习计划">
+                <NuxtLink
+                  to="/teacher/learning-plan"
+                >
+                  <UIcon
+                    class="w-6 h-6"
+                    name="i-lucide-calendar-days"
                   />
                 </NuxtLink>
               </UTooltip>

@@ -13,8 +13,8 @@ const toast = useToast()
 const { $api } = useNuxtApp()
 
 const { data: learningMaterials, refresh, pending } = await useAPI<LearningMaterial[]>('/LearningMaterials/ListVocabularyMaterials')
-const [modalState, toggleModalState] = useToggle() // 控制编辑弹窗
-const [deleteModalState, toggleDeleteModalState] = useToggle() // 控制编辑弹窗
+const [modalState, toggleModalState] = useToggle()
+const [deleteModalState, toggleDeleteModalState] = useToggle()
 
 const newMaterial = reactive<Partial<LearningMaterial>>({
   id: '',
